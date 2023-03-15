@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>棋盘覆盖：2^k次方</title>
+  </head>
+
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: rgba(0, 0, 0, 0.711);
+    }
+
+    .container {
+      display: flex;
+      min-height: 400px;
+      min-width: 400px;
+    }
+
+    .chess {
+      flex: 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 10px solid #82d4ee;
+
+      min-width: 0;
+      min-height: inherit;
+      overflow: hidden;
+
+      background-color: rgba(245, 247, 249, 0.8);
+      transition: all 0.8s ease;
+    }
+
+    .chess:hover {
+      min-width: 100vw;
+      min-height: 100vh;
+
+      background-color: #82d4ee;
+    }
+
+    .control {
+      flex: 1;
+      border: 3px solid #82d4ee;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-weight: 500;
+      color: white;
+    }
+
+    input {
+      margin: 10px;
+    }
+
+    .item {
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    .item button {
+      /* font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace; */
+      /* font-size: 17px; */
+      padding: 1em 2em;
+      font-weight: 500;
+      background: #1f2937;
+      color: white;
+      border: none;
+      position: relative;
+      overflow: hidden;
+      border-radius: 0.6em;
+    }
+
+    .gradient {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      left: 0;
+      top: 0;
+      border-radius: 0.6em;
+      margin-top: -0.25em;
+      background-image: linear-gradient(
+        rgba(0, 0, 0, 0),
+        rgba(0, 0, 0, 0),
+        rgba(0, 0, 0, 0.3)
+      );
+    }
+
+    .label {
+      position: relative;
+      top: -1px;
+    }
+
+    .transition {
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+      transition-duration: 500ms;
+      background-color: rgba(16, 185, 129, 0.6);
+      border-radius: 9999px;
+      width: 0;
+      height: 0;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    button:hover .transition {
+      width: 14em;
+      height: 14em;
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    .item input {
+      background-color: #eee;
+      border: none;
+      padding: 1rem;
+      font-size: 1rem;
+      width: 13em;
+      border-radius: 1rem;
+      box-shadow: 0 0.2rem #dfd9d9;
+      cursor: pointer;
+    }
+
+    .item input:focus {
+      outline-color: lightcoral;
+    }
+  </style>
+  <body>
+    <div class="container">
+      <div class="chess"></div>
+      <div class="control">
+        <div class="item">
+          <span>设置棋盘大小：</span>
+          <input type="text" placeholder="边长为2^k次方" name="size" />
+          <button type="button">
+            <span class="transition"></span>
+            <span class="gradient"></span>
+            <span class="label">生成棋盘</span>
+          </button>
+          <br />
+        </div>
+
+        <div class="item">
+          <span>特殊方格X的值：</span>
+          <input type="text" placeholder="不能超过边长" name="X" class="x" />
+          <br />
+
+          <span>特殊方格y的值：</span>
+          <input
+            type="text"
+            placeholder="不能超过边长"
+            name="Y"
+            class="y"
+          /><br />
+        </div>
+        <div class="item">
+          <button type="button">
+            <span class="transition"></span>
+            <span class="gradient"></span>
+            <span class="label">棋盘覆盖</span>
+          </button>
+
+          <button type="button">
+            <span class="transition"></span>
+            <span class="gradient"></span>
+            <span class="label">单步运行</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      //生成棋盘
+      const chess = document.querySelector(".chess");
+      const creates = document.querySelectorAll("button");
+      const text = document.querySelector("input");
+
+      let temp = 0;
+
+      creates[0].addEventListener("click", function () {
+        if (temp != text.value) {
+          //先移除原来的棋盘
+
+          if (chess.children.length != 0) {
+            chess.removeChild(document.querySelector("table"));
+          }
+          //生成新的棋盘
+          const table = document.createElement("table");
+          table.style.borderCollapse = "collapse";
+          chess.appendChild(table);
+
+          for (let i = 0; i < text.value; i++) {
+            const tr = document.createElement("tr");
+            tr.style.height = "24px";
+            table.appendChild(tr);
+            for (let j = 0; j < text.value; j++) {
+              const td = document.createElement("td");
+              td.style.border = "1px solid #464545";
+              td.style.width = "24px";
+              tr.append(td);
+            }
+          }
+          temp = text.value;
+        }
+      });
+
+      //初始化棋盘
+      function initChess() {
+        const array = new Array();
+        for (let i = 0; i < 512; i++) {
+          array[i] = new Array();
+          for (let j = 0; j < 512; j++) {
+            array[i][j] = 0;
+          }
+        }
+        return array;
+      }
+
+      //棋盘覆盖核心算法函数
+      let ti = 0;
+      function chessBord(tr, tc, dr, dc, size) {
+        if (size === 1) return;
+
+        let t = ti++;
+        const s = size / 2;
+
+        //覆盖左上角棋盘
+        if (dr < tr + s && dc < tc + s) {
+          //特殊方格在此棋盘中
+          chessBord(tr, tc, dr, dc, s);
+        } else {
+          //特殊方格不在此棋盘中
+          array[tr + s - 1][tc + s - 1] = t;
+          chessBord(tr, tc, tr + s - 1, tc + s - 1, s);
+        }
+
+        //覆盖右上角棋盘
+        if (dr < tr + s && dc >= tc + s) {
+          chessBord(tr, tc + s, dr, dc, s);
+        } else {
+          array[tr + s - 1][tc + s] = t;
+          chessBord(tr, tc + s, tr + s - 1, tc + s, s);
+        }
+
+        //覆盖左下角棋盘
+        if (dr >= tr + s && dc < tc + s) {
+          chessBord(tr + s, tc, dr, dc, s);
+        } else {
+          array[tr + s][tc + s - 1] = t;
+          chessBord(tr + s, tc, tr + s, tc + s - 1, s);
+        }
+
+        //覆盖右下角棋盘
+        if (dr >= tr + s && dc >= tc + s) {
+          chessBord(tr + s, tc + s, dr, dc, s);
+        } else {
+          array[tr + s][tc + s] = t;
+          chessBord(tr + s, tc + s, tr + s, tc + s, s);
+        }
+      }
+
+      //棋盘覆盖代码
+      let array = initChess();
+      creates[1].addEventListener("click", function () {
+        const X = document.querySelector(".x");
+        const Y = document.querySelector(".y");
+
+        array = initChess();
+        chessBord(0, 0, +X.value, +Y.value, +text.value);
+        ti = 0;
+
+        //上色
+        const table = document.querySelector("table");
+
+        for (let i = 0; i < text.value; i++) {
+          for (let j = 0; j < text.value; j++) {
+            const p = array[i][j];
+            if (p === table.rows[i].cells[j].textContent) {
+              continue;
+            }
+            table.rows[i].cells[j].style.backgroundColor = `rgb(  ${
+              ((p + 3) * 35) % 256
+            } ,${((p + 4) * 45) % 256},${((p + 1) * 25) % 256}  )`;
+            table.rows[i].cells[j].textContent = p;
+          }
+        }
+      });
+
+      //单步运行代码
+      let count = 0;
+      let temp1 = 0;
+      creates[2].addEventListener("click", function () {
+        const X = document.querySelector(".x");
+        const Y = document.querySelector(".y");
+
+        array = initChess();
+        chessBord(0, 0, +X.value, +Y.value, +text.value);
+        ti = 0;
+
+        //上色
+        const table = document.querySelector("table");
+
+        for (let i = 0; i < text.value; i++) {
+          for (let j = 0; j < text.value; j++) {
+            const p = array[i][j];
+            if (p === count) {
+              table.rows[i].cells[j].style.backgroundColor = `rgb(  ${
+                ((p + 3) * 35) % 256
+              } ,${((p + 4) * 45) % 256},${((p + 1) * 25) % 256}  )`;
+              table.rows[i].cells[j].textContent = p;
+            }
+          }
+        }
+        count++;
+      });
+    </script>
+  </body>
+</html>
